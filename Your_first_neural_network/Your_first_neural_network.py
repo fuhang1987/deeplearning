@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 # coding: utf-8
 
 # # 你的第一个神经网络
@@ -31,7 +31,7 @@ rides = pd.read_csv(data_path)
 # In[3]:
 
 
-rides[:100]
+rides.head()
 
 
 # ## 数据简介
@@ -70,7 +70,7 @@ data.head()
 # 
 # 我们会保存换算因子，以便当我们使用网络进行预测时可以还原数据。
 
-# In[6]:
+# In[20]:
 
 
 quant_features = ['casual', 'registered', 'cnt', 'temp', 'hum', 'windspeed']
@@ -86,7 +86,7 @@ for each in quant_features:
 # 
 # 我们将大约最后 21 天的数据保存为测试数据集，这些数据集会在训练完网络后使用。我们将使用该数据集进行预测，并与实际的骑行人数进行对比。
 
-# In[7]:
+# In[21]:
 
 
 # Save data for approximately the last 21 days 
@@ -103,7 +103,7 @@ test_features, test_targets = test_data.drop(target_fields, axis=1), test_data[t
 
 # 我们将数据拆分为两个数据集，一个用作训练，一个在网络训练完后用来验证网络。因为数据是有时间序列特性的，所以我们用历史数据进行训练，然后尝试预测未来数据（验证数据集）。
 
-# In[8]:
+# In[22]:
 
 
 # Hold out the last 60 days or so of the remaining data as a validation set
@@ -133,7 +133,7 @@ val_features, val_targets = features[-60*24:], targets[-60*24:]
 # 
 #   
 
-# In[9]:
+# In[29]:
 
 
 class NeuralNetwork(object):
@@ -151,7 +151,7 @@ class NeuralNetwork(object):
         self.weights_hidden_to_output = np.random.normal(0.0, self.hidden_nodes**-0.5, 
                                        (self.hidden_nodes, self.output_nodes))
         self.lr = learning_rate
-        print("self.weights_hidden_to_output ",self.weights_hidden_to_output.shape )
+        #print("self.weights_hidden_to_output ",self.weights_hidden_to_output.shape )
        #### TODO: Set self.activation_function to your implemented sigmoid function ####
         #
         # Note: in Python, you can define a function with a lambda expression,
@@ -182,15 +182,15 @@ class NeuralNetwork(object):
         delta_weights_i_h = np.zeros(self.weights_input_to_hidden.shape)
         delta_weights_h_o = np.zeros(self.weights_hidden_to_output.shape)
         for X, y in zip(features, targets):
-            print("X",X)
+            #print("X",X)
             #### Implement the forward pass here ####
             ### Forward pass ###
             # TODO: Hidden layer - Replace these values with your calculations.
             hidden_inputs =np.dot(X,self.weights_input_to_hidden)
-            print("hidden_inputs",hidden_inputs)
+            #print("hidden_inputs",hidden_inputs)
             
             hidden_outputs = self.activation_function( hidden_inputs ) # signals from hidden layer
-            print("hidden_outputs",hidden_outputs)
+            #print("hidden_outputs",hidden_outputs)
             # TODO: Output layer - Replace these values with your calculations.
             final_inputs =np.dot(hidden_outputs,self.weights_hidden_to_output)# signals into final output layer
             final_outputs = final_inputs # signals from final output layer
@@ -201,18 +201,18 @@ class NeuralNetwork(object):
 
             # TODO: Output error - Replace this value with your calculations.
             error = y-final_outputs # Output layer error is the difference between desired target and actual output.
-            print("error",error)
+            #print("error",error)
             output_error_term = error
             # TODO: Calculate the hidden layer's contribution to the error
             hidden_error =np.dot(self.weights_hidden_to_output,output_error_term)
-            print("hidden_error",hidden_error)
+            #print("hidden_error",hidden_error)
             # TODO: Backpropagated error terms - Replace these values with your calculations.
             
             hidden_error_term = hidden_error*(hidden_outputs*(1-hidden_outputs))
-            print("hidden_outputs*(1-hidden_outputs)",(hidden_outputs*(1-hidden_outputs)))
+            #print("hidden_outputs*(1-hidden_outputs)",(hidden_outputs*(1-hidden_outputs)))
             # Weight step (input to hidden)
-            print("hidden_error_term",hidden_error_term)
-            print("X=",X)
+            #print("hidden_error_term",hidden_error_term)
+            #print("X=",X)
             delta_weights_i_h +=hidden_error_term*X[:,None]
             
             # Weight step (hidden to output)
@@ -243,7 +243,7 @@ class NeuralNetwork(object):
         return final_outputs
 
 
-# In[10]:
+# In[30]:
 
 
 def MSE(y, Y):
@@ -254,7 +254,7 @@ def MSE(y, Y):
 # 
 # 运行这些单元测试，检查你的网络实现是否正确。这样可以帮助你确保网络已正确实现，然后再开始训练网络。这些测试必须成功才能通过此项目。
 
-# In[11]:
+# In[31]:
 
 
 import unittest
@@ -337,15 +337,15 @@ unittest.TextTestRunner().run(suite)
 # 
 # 隐藏节点越多，模型的预测结果就越准确。尝试不同的隐藏节点的数量，看看对性能有何影响。你可以查看损失字典，寻找网络性能指标。如果隐藏单元的数量太少，那么模型就没有足够的空间进行学习，如果太多，则学习方向就有太多的选择。选择隐藏单元数量的技巧在于找到合适的平衡点。
 
-# In[21]:
+# In[35]:
 
 
 import sys
 
-### Set the hyperparameters here ###
-iterations = 100
+### TODO:Set the hyperparameters here, you need to change the defalut to get a better solution ###
+iterations = 2000
 learning_rate = 0.5
-hidden_nodes = 5
+hidden_nodes = 10
 output_nodes = 1
 
 N_i = train_features.shape[1]
@@ -362,14 +362,16 @@ for ii in range(iterations):
     # Printing out the training progress
     train_loss = MSE(network.run(train_features).T, train_targets['cnt'].values)
     val_loss = MSE(network.run(val_features).T, val_targets['cnt'].values)
-    sys.stdout.write("\rProgress: {:2.1f}".format(100 * ii/float(iterations))                      + "% ... Training loss: " + str(train_loss)[:5]                      + " ... Validation loss: " + str(val_loss)[:5])
+    #sys.stdout.write("\rProgress: {:2.1f}".format(100 * ii/float(iterations)) \
+                     #+ "% ... Training loss: " + str(train_loss)[:5] \
+                     #+ " ... Validation loss: " + str(val_loss)[:5])
     sys.stdout.flush()
     
     losses['train'].append(train_loss)
     losses['validation'].append(val_loss)
 
 
-# In[22]:
+# In[36]:
 
 
 plt.plot(losses['train'], label='Training loss')
@@ -382,11 +384,10 @@ _ = plt.ylim()
 # 
 # 使用测试数据看看网络对数据建模的效果如何。如果完全错了，请确保网络中的每步都正确实现。
 
-# In[23]:
+# In[37]:
 
 
 fig, ax = plt.subplots(figsize=(8,4))
-
 
 mean, std = scaled_features['cnt']
 predictions = network.run(test_features).T*std + mean
@@ -410,15 +411,3 @@ _ = ax.set_xticklabels(dates[12::24], rotation=45)
 # 
 # #### 请将你的答案填写在下方
 # 
-
-# In[ ]:
-
-
-预测在总体趋势上与实际值相同，但是预测值和实际值误差相对较大。
-
-
-# In[ ]:
-
-
-
-
